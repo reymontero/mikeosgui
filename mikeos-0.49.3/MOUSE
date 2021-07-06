@@ -1,0 +1,31 @@
+I think this mode dont need to use the 0EBh(Read Data)-command.
+Just use 0F4h (Enable Data Reporting), then the mouse sends data
+to the controller.
+
+
+
+
+Yes, this routine check the mouse activity.
+I use this for propper keyboard input.
+
+in al, 64h ; status
+test al, 1 ; something in the buffer?
+jz NOKEY
+test al, 20h ; PS2-Mouse
+jnz MOUSE
+in al, 60h ; get key from keyboard
+dec al ; escape?
+jz TERMINATE
+.... ; check which key is pressed
+....
+MOUSE:
+.... ; check mouse activity
+....
+NOKEY: ; nothing happends
+....
+....
+TERMINATE: ; programm end
+
+
+
+

@@ -1,0 +1,116 @@
+===================================================================
+MikeOS -- Open source 16-bit operating system for x86 PCs
+Copyright (C) 2006, 2007 MikeOS Developers -- see LICENSE.TXT
+===================================================================
+
+This file contains information on modifying and updating MikeOS.
+The code is well-commented and (hopefully!) easy to navigate; if
+you have any questions, just email Mike (okachi@gmail.com).
+
+You need NASM to build the kernel, bootloader and example programs;
+if you want to test your results quickly, I recommend using the
+QEMU PC emulator. You'll also need some way of working with virtual
+floppy disks if you want to avoid the real thing -- loopback
+mounting and 'dd' under Linux is ideal for this.
+
+Under Windows, you could write the 'mikeos.flp' file (see the
+'disk-images' directory) to a real floppy disk, and then copy over
+your updated kernel and/or programs after assembling. (There may
+be a way to use virtual floppies in Windows -- please let me know!)
+
+
+Source code structure
+---------------------
+
+The two most important directories are bootloader/ and kernel/.
+Chances are you'll have no reason to modify the former; it does a
+single job (booting MIKEKERN.BIN) and does it well! The bootloader,
+based on code by E Dehling, simply grabs the kernel from the FAT12
+floppy, loads it into RAM, and jumps to its execution point.
+
+The kernel is a padded 64K file, in which the first 32K is blank and
+used for loading additional programs. At the end of that 32K, at
+0x8000, we have the 3-char API version string -- apps can check this
+in future releases. Following that are the system call vectors, which
+provide static points in the code for external programs to use. For
+instance, any program that wants to call 'os_print_string' can just
+call 0x8006 -- it's always the same. App programmers can use the
+'mikedev.inc' file which defines proper names for these locations,
+and gives some protection against fundamental OS design changes.
+
+So, in a nutshell, this is the memory map of the 64K used by MikeOS:
+
+0x0000 - 0x7FFF = 32K blank space for programs
+0x8000 = OS API version string (3 characters)
+0x8003 = Vector to restart the MikeOS kernel
+0x8006 onwards = System call vectors (will grow)
+0xXXXX = Kernel code and system calls, padded to 56K
+Last 8K = Generic OS buffer (eg used by FAT12 routines)
+
+MikeOS includes very rudimentary support for simple DOS COM
+executables (under 32K). The kernel establishes a number of
+entries in the interrupt table, the most important of which is
+int 0x21 (general DOS services).
+
+
+Kernel development
+------------------
+
+It's a good idea to not change anything up until the system call
+vectors, and even then, only add things to the end of the vectors
+rather than shifting them around (as it will break programs). The
+main kernel code sets up the stack and segment registers, draws
+the screen and brings up a file requester dialog. See the 'programs'
+directory for example apps which are put onto the floppy image by
+the 'build' script.
+
+System calls should restore as many registers as possible; if a
+call doesn't return anything, you can use 'pusha' and 'popa' on
+entry and exit respectively to achieve this. System calls can freely
+use other system calls. There are a few internal calls (prefixed with
+'os_int') which are not visible to user programs.
+
+
+Current limitations
+-------------------
+
+# The FAT12 code in the bootloader and kernel is limited to
+  scanning 16 disk entries maximum
+
+# Some DOS programs don't exit correctly, requiring a reboot
+
+These will hopefully be fixed in upcoming releases.
+
+
+Frequently asked questions
+--------------------------
+
+Q. Will MikeOS ever use 32-bit/protected-mode/C/C++ etc.?
+
+A. No! It's designed to be simple, clean and easy to understand
+   for those interested in OS development and x86 assembler. I'm
+   not planning to take over the world. Well, not with MikeOS...
+
+
+GNU NANO syntax highlighting
+----------------------------
+
+Paste this into /etc/nanorc for easy-on-the-eyes syntax
+highlighting when you're editing code (doesn't have all
+x86 opcodes):
+
+syntax "assembler" "\.asm$"
+color blue "\<(cli|sti|hlt|test|btr|bts|lodsb|bt|jc|push|pop|cmp|cld|rep|in|out|stosb|shr|iret|stc|jmp|xchg|jae|jnc|ret|pusha|popa|pushad|popad|mov|movzx|cmov|jg|jl|jge|jle|je|jne|jz|jnz|js|jo|jxx|jbe|jnbe|jnle|lea|loop|loope|loopz|loopne|loopnz|int|call|add|adc|sub|mul|imul|div|idiv|cdq|clc|rcl|rol|ror|and|or|xor|not|setg|neg|inc|dec|enter|leave)\>"
+color red "^[A-Za-z0-9_-.]*:"
+color yellow "\<(section)\>"
+color green ";.*"
+color green "^;$"
+color magenta "\<(db|dw|equ|resb|resd|resw|resq|dd|rest)\>"
+color brightgreen,green "[[:space:]]+$"
+
+
+ -- Mike Saunders (okachi@gmail.com) 16/01/07
+
+
+===================================================================
+

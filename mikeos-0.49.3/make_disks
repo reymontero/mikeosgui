@@ -1,0 +1,36 @@
+#!/bin/sh
+
+# Script to build MikeOS release floppy and CD images.
+# Install (dd) bootblock to MIKEOS.FLP, then loopback
+# mount the floppy onto tmp-loop/. Add kernel and
+# programs, unmount floppy, then make CD-ROM version
+# using mkisofs
+
+if test "`whoami`" != "root" ; then
+  echo "You must be logged in as root to build (for loopback mounting)"
+  exit
+fi
+
+echo '>>> Adding bootloader to floppy image...'
+
+dd status=noxfer conv=notrunc if=bootload/mikeboot.bin of=disk-images/mikeos.flp || exit
+
+echo '>>> Copying MikeOS kernel and programs...'
+
+mkdir tmp-loop && mount -o loop -t vfat disk-images/mikeos.flp tmp-loop && cp kernel/mikekern.bin tmp-loop/
+
+cp programs/*.bin tmp-loop
+
+echo '>>> Unmounting loopback floppy...'
+
+umount tmp-loop || exit
+
+rm -rf tmp-loop
+
+echo '>>> Creating CD-ROM ISO image...'
+
+rm -f disk-images/mikeos.iso
+mkisofs -quiet -V 'MIKEOS' -input-charset iso8859-1 -o disk-images/mikeos.iso -b mikeos.flp disk-images/ || exit
+
+echo '>>> MikeOS build complete!'
+

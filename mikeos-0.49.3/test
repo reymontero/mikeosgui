@@ -1,0 +1,6 @@
+#!/bin/sh
+
+# Script to test MikeOS by booting from floppy disk image with QEMU
+
+QEMU_AUDIO_DRV=oss qemu -soundhw pcspk -fda disk-images/mikeos.flp
+

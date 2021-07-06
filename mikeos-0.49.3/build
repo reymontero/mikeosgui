@@ -1,0 +1,30 @@
+#!/bin/sh
+
+# Script to assemble MikeOS -- the bootloader, kernel and
+# supplied programs
+
+echo '>>> Assembling bootloader...'
+
+nasm -f bin -o bootload/mikeboot.bin bootload/mikeboot.asm || exit
+
+echo '>>> Assembling MikeOS kernel...'
+
+cd kernel
+
+nasm -f bin -o mikekern.bin os_main.asm || exit
+
+cd ..
+
+echo '>>> Assembling programs...'
+
+cd programs
+
+for i in *.asm
+do
+	nasm -f bin $i -o `basename $i .asm`.bin || exit
+done
+
+cd ..
+
+echo '>>> Done!'
+

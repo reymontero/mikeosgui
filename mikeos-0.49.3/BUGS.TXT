@@ -1,0 +1,15 @@
+===================================================================
+MikeOS -- Open source 16-bit operating system for x86 PCs
+Copyright (C) 2006, 2007 MikeOS Developers -- see LICENSE.TXT
+===================================================================
+
+# os_get_time_string can return '14:7' instead of '14:07' -- we
+  need to add a zero if string length of hour or minute is 1
+
+# Some DOS apps do not exit correctly. This may be due to our
+  methods for handling DOS app exits, or because we don't set up
+  a proper program segment prefix (PSP)
+
+
+===================================================================
+
